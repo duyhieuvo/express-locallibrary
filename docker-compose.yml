@@ -1,0 +1,46 @@
+version: '2.4'
+services:
+  mongo:
+    image: mongo:4.4.1
+    hostname: mongo
+    container_name: mongo
+    restart: always
+    ports:
+    - 27017:27017
+  mongoclient:
+    image: mongoclient/mongoclient:latest
+    hostname: mongoclient
+    container_name: mongoclient
+    restart: always
+    depends_on:
+    - mongo
+    ports:
+    - 3456:3000
+    environment:
+      MONGO_URL: "mongodb://mongo:27017/local_library"
+      MONGOCLIENT_DEFAULT_CONNECTION_URL: "mongodb://mongo:27017/local_library"
+  config_mongodb:
+    build:
+      context: .
+    image: hv/nodejsapp
+    container_name: config_mongodb
+    restart: on-failure
+    depends_on:
+      - mongo
+    environment:
+      MONGODB_URI: "mongodb://mongo:27017/local_library"
+    command: ["node","populatedb.js"]
+  app:
+    build:
+      context: .
+    image: hv/nodejsapp
+    container_name: app
+    restart: always
+    depends_on:
+      - config_mongodb
+    ports:
+    - 3000:3000
+    environment:
+      MONGODB_URI: "mongodb://mongo:27017/local_library"
+     
+  
